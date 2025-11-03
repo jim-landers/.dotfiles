@@ -93,12 +93,19 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  # Had to add this to fix application rendering.
+  # https://discourse.nixos.org/t/nixos-25-05-upgrade-gnome-issues-a-few-apps-not-starting-system-monitor-tweaks/65289/17
+  environment.variables = {
+    GSK_RENDERER = "opengl";
+  };
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
   ];
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
