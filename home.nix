@@ -1,46 +1,53 @@
 { config, pkgs, ... }:
 
 {
-  # Home Manager needs a bit of information about you and the paths it should manage.
-  home.username = "home";
-  home.homeDirectory = "/home/home";
+    # Home Manager needs a bit of information about you and the paths it should manage.
+    home.username = "home";
+    home.homeDirectory = "/home/home";
 
-  # User packages (migrated from your /etc/nixos configuration)
-  home.packages = with pkgs; [
-    asciiquarium
-    claude-code
-    git
-    lazygit
-    nodejs_24
-    tmux
-    wget
-  ];
+    home.packages = with pkgs; [
+        asciiquarium
+        claude-code
+        gcc
+        git
+        go
+        lazygit
+        nodejs_24
+        obsidian
+        ripgrep
+        tmux
+        unzip
+        wget
+        zsh
+    ];
 
-  # Git configuration
-  programs.git = {
-    enable = true;
-    userName = "home";
-    userEmail = "home@homelab";  # Update this to your email
-  };
+    programs.zsh = {
+        enable = true;
+    };
 
-  # Tmux configuration
-  programs.tmux = {
-    enable = true;
-    # Add your tmux configuration here
-  };
+    programs.git = {
+        enable = true;
+        userName = "jim-landers";
+        userEmail = "jimlanders01@gmail.com";
+    };
 
-  # Neovim configuration
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-    # Add your neovim configuration here
-  };
+    programs.tmux = {
+        enable = true;
 
-  # This value determines the Home Manager release that your configuration is
-  # compatible with. This helps avoid breakage when a new Home Manager release
-  # introduces backwards incompatible changes.
-  home.stateVersion = "25.05";
+    };
 
-  # Let Home Manager install and manage itself.
-  programs.home-manager.enable = true;
+    programs.neovim = {
+        enable = true;
+        vimAlias = true;
+        viAlias = true;
+        defaultEditor = true;
+    };
+
+    # This value determines the Home Manager release that your configuration is
+    # compatible with. This helps avoid breakage when a new Home Manager release
+    # introduces backwards incompatible changes.
+    home.stateVersion = "25.05";
+
+    # Let Home Manager install and manage itself.
+    programs.home-manager.enable = true;
 }
