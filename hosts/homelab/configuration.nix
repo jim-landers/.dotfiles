@@ -48,6 +48,11 @@
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -103,7 +108,14 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    gcc
+    git
+    go
+    neovim
+    nodejs_24
+    ripgrep
+    vim
+    unzip
     wget
     zsh
   ];
