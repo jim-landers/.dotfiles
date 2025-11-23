@@ -7,9 +7,6 @@
     home.packages = with pkgs; [
         asciiquarium
         claude-code
-        gcc
-        git
-        go
         lazygit
         nodejs_24
         obsidian
@@ -17,12 +14,23 @@
         tmux
         unzip
         wget
+        zsh
     ];
 
-    # programs.zsh = {
-    #     enable = true;
-    # };
-    #
+    programs.zsh = {
+        enable = true;
+        enableCompletion = true;
+        autosuggestion.enable = true;
+        syntaxHighlighting.enable = true;
+
+        shellAliases = {
+            ll = "ls -l";
+            lg = "lazygit";
+            nv = "nvim";
+        };
+
+    };
+
     programs.git = {
         enable = true;
         userName = "jim-landers";
