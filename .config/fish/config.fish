@@ -7,4 +7,4 @@ set -gx VISUAL nvim
 alias nv="nvim"
 
 
-starship init fish | source
+# starship init fish | source
