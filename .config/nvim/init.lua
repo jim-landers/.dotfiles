@@ -9,6 +9,12 @@ vim.o.number = true
 vim.o.relativenumber = true
 vim.g.mapleader = " "
 
+vim.api.nvim_create_autocmd("TextYankPost", {
+	callback = function()
+		vim.highlight.on_yank({ higroup = "IncSearch" })
+	end,
+})
+
 -- Normal Mode Binds
 vim.keymap.set("n", "<leader>so", ":update<CR> :source<CR>", { desc = "[S]hout [O]ut" })
 vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
@@ -56,12 +62,16 @@ vim.pack.add({
 	{ src = "https://github.com/stevearc/oil.nvim" },
 	{ src = "https://github.com/nvim-mini/mini.nvim" },
 	{ src = "https://github.com/folke/flash.nvim" },
+	{ src = "https://github.com/lewis6991/gitsigns.nvim" },
+	{ src = "https://github.com/sphamba/smear-cursor.nvim" },
 })
 
 vim.cmd("colorscheme vague")
 -- Tmux in Windows Terminal does not work with colors well unless this is set.
 -- Need more info on how this plays in other terminal applications
 vim.cmd("set termguicolors")
+
+require("smear_cursor").setup()
 
 require("mason").setup()
 require("mason-lspconfig").setup()
@@ -178,10 +188,130 @@ vim.keymap.set("c", "<c-s>", function()
 	require("flash").toggle()
 end, { desc = "Toggle Flash Search" })
 
+local gs = require("gitsigns")
+gs.setup({
+	signs = {
+		add = { text = "┃" },
+		change = { text = "┃" },
+		delete = { text = "_" },
+		topdelete = { text = "‾" },
+		changedelete = { text = "~" },
+		untracked = { text = "┆" },
+	},
+	signs_staged = {
+		add = { text = "┃" },
+		change = { text = "┃" },
+		delete = { text = "_" },
+		topdelete = { text = "‾" },
+		changedelete = { text = "~" },
+		untracked = { text = "┆" },
+	},
+	signs_staged_enable = true,
+	signcolumn = true, -- Toggle with `:Gitsigns toggle_signs`
+	numhl = false, -- Toggle with `:Gitsigns toggle_numhl`
+	linehl = false, -- Toggle with `:Gitsigns toggle_linehl`
+	word_diff = false, -- Toggle with `:Gitsigns toggle_word_diff`
+	watch_gitdir = {
+		follow_files = true,
+	},
+	auto_attach = true,
+	attach_to_untracked = false,
+	current_line_blame = false, -- Toggle with `:Gitsigns toggle_current_line_blame`
+	current_line_blame_opts = {
+		virt_text = true,
+		virt_text_pos = "eol", -- 'eol' | 'overlay' | 'right_align'
+		delay = 1000,
+		ignore_whitespace = false,
+		virt_text_priority = 100,
+		use_focus = true,
+	},
+	current_line_blame_formatter = "<author>, <author_time:%R> - <summary>",
+	sign_priority = 6,
+	update_debounce = 100,
+	status_formatter = nil, -- Use default
+	max_file_length = 40000, -- Disable if file is longer than this (in lines)
+	preview_config = {
+		-- Options passed to nvim_open_win
+		style = "minimal",
+		relative = "cursor",
+		row = 0,
+		col = 1,
+	},
+	-- Keymaps set below here
+})
+
+gs.setup({
+	on_attach = function(bufnr)
+		local gitsigns = require("gitsigns")
+
+		local function map(mode, l, r, opts)
+			opts = opts or {}
+			opts.buffer = bufnr
+			vim.keymap.set(mode, l, r, opts)
+		end
+
+		-- Navigation
+		map("n", "]c", function()
+			if vim.wo.diff then
+				vim.cmd.normal({ "]c", bang = true }, { desc = "Git Hunk Next" })
+			else
+				gitsigns.nav_hunk("next")
+			end
+		end)
+
+		map("n", "[c", function()
+			if vim.wo.diff then
+				vim.cmd.normal({ "[c", bang = true }, { desc = "Git Hunk Prev." })
+			else
+				gitsigns.nav_hunk("prev")
+			end
+		end)
+
+		-- Actions
+		map("n", "<leader>hs", gitsigns.stage_hunk, { desc = "Git [H]unk [S]tage" })
+		map("n", "<leader>hr", gitsigns.reset_hunk, { desc = "Git [H]unk [R]eset" })
+
+		map("v", "<leader>hs", function()
+			gitsigns.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
+		end, { desc = "Git [H]unk [S]tage" })
+
+		map("v", "<leader>hr", function()
+			gitsigns.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
+		end, { desc = "Git [H]unk [R]eset" })
+
+		map("n", "<leadef>hS", gitsigns.stage_buffer, { desc = "Git [H]unk [S]tage Buffer" })
+		map("n", "<leader>hR", gitsigns.reset_buffer, { desc = "Git [H]unk [R]eset Buffer" })
+		map("n", "<leader>hp", gitsigns.preview_hunk, { desc = "Git [H]unk [P]review" })
+		map("n", "<leader>hi", gitsigns.preview_hunk_inline, { desc = "Git [H]unk Preview [I]nline" })
+
+		map("n", "<leader>hb", function()
+			gitsigns.blame_line({ full = true })
+		end, { desc = "Git Blame" })
+
+		map("n", "<leader>hd", gitsigns.diffthis, { desc = "Git Diff" })
+
+		map("n", "<leader>hD", function()
+			gitsigns.diffthis("~")
+		end, { desc = "Git Diff (Prev. Commit)" })
+
+		map("n", "<leader>hQ", function()
+			gitsigns.setqflist("all")
+		end, { desc = "Git Set QF List (All)" })
+		map("n", "<leader>hq", gitsigns.setqflist, { desc = "Git Set QF List (Buffer)" })
+
+		-- Toggles
+		map("n", "<leader>tb", gitsigns.toggle_current_line_blame, { desc = "Git [T]oggle Line [B]lame" })
+		map("n", "<leader>tw", gitsigns.toggle_word_diff, { desc = "Git [T]oggle Word [D]iff" })
+
+		-- Text object
+		map({ "o", "x" }, "ih", gitsigns.select_hunk, { desc = "Git [I]nside [H]unk" })
+	end,
+})
+
 require("oil").setup({
 	view_options = {
 		show_hidden = true,
 	},
 })
-vim.keymap.set("n", "<leader>-", ":Oil<CR>", { desc = "Open parent[-] directory" })
 
+vim.keymap.set("n", "<leader>-", ":Oil<CR>", { desc = "Open parent[-] directory" })
