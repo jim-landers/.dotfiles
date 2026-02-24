@@ -1,4 +1,4 @@
-{ config, pkgs, username, ... }:
+{ config, pkgs, username, self, ... }:
 
 {
     home.username = username;
@@ -46,6 +46,7 @@
         vimAlias = true;
         viAlias = true;
     };
+    xdg.configFile."nvim".source = "${self}/.config/nvim";
 
     # This value determines the Home Manager release that your configuration is
     # compatible with. This helps avoid breakage when a new Home Manager release
