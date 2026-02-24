@@ -1,20 +1,33 @@
 {
   description = "NixOS configuration with Home Manager";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+	nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+	neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     nixos-wsl = {
       url = "github:nix-community/NixOS-WSL/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+	wrappers.url = "github:BirdeeHub/nix-wrapper-modules";
   };
-  outputs = { self, nixpkgs, home-manager, nixos-wsl }:
+
+  outputs = { self, nixpkgs, nixpkgs-unstable, neovim-nightly-overlay, home-manager, nixos-wsl, wrappers }:
     let
-      sharedModules = [
-          { nixpkgs.config.allowUnfree = true; }
+      unstable = import nixpkgs-unstable {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+      };
+      neovim-nightly = neovim-nightly-overlay.packages.x86_64-linux.neovim;
+      sharedModules = [{
+        nix.settings.experimental-features = [ "nix-command" "flakes" ];
+        nixpkgs.config.allowUnfree = true; }
       ];
       username = "land";
     in {
@@ -28,7 +41,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.${username} = import ./home.nix;
-              home-manager.extraSpecialArgs = { inherit username; };
+              home-manager.extraSpecialArgs = { inherit username wrappers neovim-nightly; };
             }
           ];
         };
@@ -45,7 +58,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.${username} = import ./home.nix;
-              home-manager.extraSpecialArgs = { inherit username self; };
+              home-manager.extraSpecialArgs = { inherit username self unstable wrappers neovim-nightly; };
             }
           ];
         };

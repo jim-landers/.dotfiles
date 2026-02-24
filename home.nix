@@ -1,16 +1,29 @@
-{ config, pkgs, username, self, ... }:
+{ config, pkgs, username, unstable, self, wrappers, neovim-nightly, ... }:
 
 {
+    imports = [
+        (wrappers.lib.mkInstallModule {
+            loc = [ "home" "packages" ];
+            name = "neovim";
+            value = wrappers.lib.wrapperModules.neovim;
+        })
+    ];
+
     home.username = username;
     home.homeDirectory = "/home/${username}";
 
     home.packages = with pkgs; [
+		unstable.claude-code
+
         asciiquarium
-        claude-code
+		gcc
+		go
         lazygit
         nodejs_24
         obsidian
+		python3
         ripgrep
+		tealdeer
         tmux
         unzip
         wget
@@ -39,19 +52,19 @@
 
     programs.tmux = {
         enable = true;
+		extraConfig = builtins.readFile "${self}/.config/tmux/.tmux.conf";
     };
 
-    programs.neovim = {
+    wrappers.neovim = { pkgs, lib, ... }: {
         enable = true;
-        vimAlias = true;
-        viAlias = true;
+        package = neovim-nightly;
     };
-    xdg.configFile."nvim".source = "${self}/.config/nvim";
+    xdg.configFile."nvim".source = config.lib.file.mkOutOfStoreSymlink "${self}/.config/nvim";
 
     # This value determines the Home Manager release that your configuration is
     # compatible with. This helps avoid breakage when a new Home Manager release
     # introduces backwards incompatible changes.
-    home.stateVersion = "25.05";
+    home.stateVersion = "25.11";
 
     # Let Home Manager install and manage itself.
     programs.home-manager.enable = true;
