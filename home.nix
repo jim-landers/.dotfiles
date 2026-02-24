@@ -1,8 +1,8 @@
-{ config, pkgs, ... }:
+{ config, pkgs, username, ... }:
 
 {
-    home.username = "home";
-    home.homeDirectory = "/home/home";
+    home.username = username;
+    home.homeDirectory = "/home/${username}";
 
     home.packages = with pkgs; [
         asciiquarium
