@@ -12,20 +12,33 @@
     home.username = username;
     home.homeDirectory = "/home/${username}";
 
+	home.sessionVariables = {
+		EDITOR = pkgs.lib.getExe config.wrappers.neovim.wrapper;
+		VISUAL = pkgs.lib.getExe config.wrappers.neovim.wrapper;
+	};
+
     home.packages = with pkgs; [
 		unstable.claude-code
 
         asciiquarium
+		basedpyright
 		gcc
 		go
+		gopls
         lazygit
+		lua-language-server
+		nixd
+		nixfmt-rfc-style
         nodejs_24
-        obsidian
 		python3
         ripgrep
+		starship
+		stylua
 		tealdeer
         tmux
+		tree
         unzip
+		vtsls
         wget
         zsh
     ];
@@ -40,26 +53,37 @@
             ll = "ls -l";
             lg = "lazygit";
             nv = "nvim";
+            vim = "nvim";
+            vi = "nvim";
         };
 
+        initExtra = builtins.readFile "${self}/.config/zsh/rc.zsh";
     };
+
+	programs.starship = {
+        enable = true;
+	};
 
     programs.git = {
         enable = true;
         userName = "jim-landers";
         userEmail = "jimlanders01@gmail.com";
     };
+	programs.lazygit = {
+		enable = true;
+	};
+    xdg.configFile."lazygit".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/.config/lazygit";
 
     programs.tmux = {
         enable = true;
 		extraConfig = builtins.readFile "${self}/.config/tmux/.tmux.conf";
     };
 
-    wrappers.neovim = { pkgs, lib, ... }: {
+    wrappers.neovim = { pkgs, config, ... }: {
         enable = true;
         package = neovim-nightly;
     };
-    xdg.configFile."nvim".source = config.lib.file.mkOutOfStoreSymlink "${self}/.config/nvim";
+    xdg.configFile."nvim".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/.config/nvim";
 
     # This value determines the Home Manager release that your configuration is
     # compatible with. This helps avoid breakage when a new Home Manager release

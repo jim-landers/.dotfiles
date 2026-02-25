@@ -52,24 +52,37 @@ vim.keymap.set("t", "<C-x>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line down" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line up" })
 
+-- This should be fairly reliable ¯\_(ツ)_/¯
+local is_nixos = vim.fn.filereadable("/etc/NIXOS") == 1
+
 -- Plugin setup and binds
-vim.pack.add({
+local plugins = {
 	{ src = "https://github.com/neovim/nvim-lspconfig" },
 	{ src = "https://github.com/vague-theme/vague.nvim" },
-	{ src = "https://github.com/mason-org/mason.nvim" },
-	{ src = "https://github.com/mason-org/mason-lspconfig.nvim" },
-	{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
 	{ src = "https://github.com/stevearc/oil.nvim" },
 	{ src = "https://github.com/nvim-mini/mini.nvim" },
 	{ src = "https://github.com/folke/flash.nvim" },
 	{ src = "https://github.com/lewis6991/gitsigns.nvim" },
 	{ src = "https://github.com/sphamba/smear-cursor.nvim" },
-})
+}
+
+if not is_nixos then
+	vim.list_extend(plugins, {
+		{ src = "https://github.com/mason-org/mason.nvim" },
+		{ src = "https://github.com/mason-org/mason-lspconfig.nvim" },
+		{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
+	})
+end
+
+vim.pack.add(plugins)
 
 vim.cmd("colorscheme vague")
 -- Tmux in Windows Terminal does not work with colors well unless this is set.
 -- Need more info on how this plays in other terminal applications
 vim.cmd("set termguicolors")
+
+require("smear_cursor").setup({})
+require("smear_cursor").enabled = true
 
 -- Janky way of fixing cursor flying all over the place in insert mode
 -- when combined with how autosuggestions are configured.
@@ -86,7 +99,8 @@ vim.api.nvim_create_autocmd("InsertLeave", {
 	end,
 })
 
-local mylsps = {
+-- LSPs managed by Mason (downloaded tools)
+local mason_lsps = {
 	-- Go
 	"gopls",
 	-- Lua
@@ -98,50 +112,37 @@ local mylsps = {
 	"vtsls",
 }
 
-require("mason").setup()
--- mason-lspconfig isn't very necessary, but convenient for auto enabling lsps installed
--- on the fly (I think?)
-require("mason-lspconfig").setup()
-require("mason-tool-installer").setup({
-	ensure_installed = mylsps,
-})
+-- LSPs provided by the system (e.g. via Nix) — not installed by Mason
+local system_lsps = {
+	"nixd",
+}
 
-vim.lsp.enable(mylsps)
+if not is_nixos then
+	require("mason").setup()
+	require("mason-lspconfig").setup()
+	require("mason-tool-installer").setup({
+		ensure_installed = mason_lsps,
+	})
+end
 
--- Autosuggestions
-vim.o.complete = ".,o" -- use buffer and omnifunc
-vim.o.completeopt = "fuzzy,menuone,noselect" -- add 'popup' for docs (sometimes)
-vim.o.pumheight = 4
-vim.o.autocomplete = true
-vim.api.nvim_create_autocmd("LspAttach", {
-	callback = function(ev)
-		vim.lsp.completion.enable(true, ev.data.client_id, ev.buf, {
-			-- Optional formating of items
-			convert = function(item)
-				-- Remove leading misc chars for abbr name,
-				-- and cap field to 25 chars
-				--local abbr = item.label
-				--abbr = abbr:match("[%w_.]+.*") or abbr
-				--abbr = #abbr > 25 and abbr:sub(1, 24) .. "…" or abbr
-				--
-				-- Remove return value
-				--local menu = ""
+local all_lsps = {}
+vim.list_extend(all_lsps, mason_lsps)
+vim.list_extend(all_lsps, system_lsps)
+vim.lsp.enable(all_lsps)
 
-				-- Only show abbr name, remove leading misc chars (bullets etc.),
-				-- and cap field to 15 chars
-				local abbr = item.label
-				abbr = abbr:gsub("%b()", ""):gsub("%b{}", "")
-				abbr = abbr:match("[%w_.]+.*") or abbr
-				abbr = #abbr > 15 and abbr:sub(1, 14) .. "…" or abbr
-
-				-- Cap return value field to 15 chars
-				local menu = item.detail or ""
-				menu = #menu > 15 and menu:sub(1, 14) .. "…" or menu
-
-				return { abbr = abbr, menu = menu }
-			end,
-		})
-	end,
+vim.lsp.config("nixd", {
+	cmd = { "nixd" },
+	filetypes = { "nix" },
+	settings = {
+		nixd = {
+			nixpkgs = {
+				expr = "import <nixpkgs> { }",
+			},
+			formatting = {
+				command = { "nixfmt" },
+			},
+		},
+	},
 })
 
 -- All this does is fix vim config lua errors/warnings
@@ -159,8 +160,19 @@ vim.lsp.config("lua_ls", {
 
 vim.keymap.set("n", "<leader>lf", vim.lsp.buf.format, { desc = "[L]anguage [F]ormat" })
 
+require("mini.statusline").setup()
+
+require('mini.completion').setup({})
+
 require("mini.pairs").setup()
-require("mini.pick").setup({})
+
+require("mini.pick").setup({
+	source = {
+		command = vim.fn.executable('rg') == 1
+			and { 'rg', '--files', '--hidden', '--no-ignore' }
+			or  { 'find', '.', '-type', 'f' }
+  },
+})
 vim.keymap.set("n", "<leader>sh", ":Pick help<CR>", { desc = "[S]earch [H]elp" })
 vim.keymap.set("n", "<leader>sf", ":Pick files<CR>", { desc = "[S]earch [F]iles" })
 vim.keymap.set("n", "<leader>sg", ":Pick grep_live<CR>", { desc = "[S]earch [G]rep" })
