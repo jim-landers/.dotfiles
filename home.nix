@@ -85,6 +85,7 @@
   programs.git = {
     enable = true;
     settings.user.name = "jim-landers";
+	settings.user.email = "jimlanders01@gmail.com";
   };
   programs.lazygit = {
     enable = true;
