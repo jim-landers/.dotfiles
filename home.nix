@@ -22,6 +22,7 @@
 
         asciiquarium
 		basedpyright
+		direnv
 		gcc
 		go
 		gopls
@@ -57,7 +58,12 @@
             vi = "nvim";
         };
 
-        initExtra = builtins.readFile "${self}/.config/zsh/rc.zsh";
+		oh-my-zsh = {
+				enable = true;
+				plugins = ["direnv"];
+			};
+
+        initContent = builtins.readFile "${self}/.config/zsh/rc.zsh";
     };
 
 	programs.starship = {
@@ -66,8 +72,7 @@
 
     programs.git = {
         enable = true;
-        userName = "jim-landers";
-        userEmail = "jimlanders01@gmail.com";
+		settings.user.name = "jim-landers";
     };
 	programs.lazygit = {
 		enable = true;
