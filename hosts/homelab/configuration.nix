@@ -5,10 +5,9 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ 
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    ./hardware-configuration.nix
+  ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -53,7 +52,6 @@
   systemd.targets.hibernate.enable = false;
   systemd.targets.hybrid-sleep.enable = false;
 
-
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
@@ -86,9 +84,12 @@
   users.users.home = {
     isNormalUser = true;
     description = "home";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
     packages = with pkgs; [
-    #  thunderbird
+      #  thunderbird
     ];
     shell = pkgs.zsh;
   };
@@ -121,12 +122,12 @@
   ];
 
   programs.neovim = {
-      enable = true;
-      defaultEditor = true;
+    enable = true;
+    defaultEditor = true;
   };
 
   programs.zsh = {
-        enable = true;
+    enable = true;
   };
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -149,7 +150,10 @@
   # networking.firewall.enable = false;
 
   # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
